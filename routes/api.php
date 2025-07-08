@@ -55,3 +55,28 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
 // Google OAuth
 Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect']);
 Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
+
+
+// Facebook OAuth
+Route::get('/auth/facebook/redirect', function () {
+    return Socialite::driver('facebook')->stateless()->redirect();
+});
+
+Route::get('/auth/facebook/callback', function () {
+    $facebookUser = Socialite::driver('facebook')->stateless()->user();
+
+    $user = User::updateOrCreate([
+        'email' => $facebookUser->getEmail(),
+    ], [
+        'name' => $facebookUser->getName(),
+        'facebook_id' => $facebookUser->getId(),
+        'password' => Hash::make(Str::random(24)), // dummy password
+    ]);
+
+    $token = JWTAuth::fromUser($user);
+
+    return response()->json([
+        'token' => $token,
+        'user' => $user,
+    ]);
+});
