@@ -52,7 +52,7 @@ class UserController extends Controller
                 'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
                 'password' => 'sometimes|string|min:6|confirmed',
                 'role' => 'sometimes|string|in:user,admin',
-                'image' => 'sometimes|image|max:2048',
+                'image' => 'sometimes|mimes:jpg,jpeg,png,gif,webp,bmp|max:2048',
             ]);
     
             if (isset($validated['password'])) {
