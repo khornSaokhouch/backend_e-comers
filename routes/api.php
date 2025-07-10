@@ -15,6 +15,10 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Email verification routes
 Route::middleware('auth:api')->group(function () {
+
+    Route::get('/user', function (Request $request) {
+        return response()->json(['user' => $request->user()]);
+    });
     Route::get('/email/verify', function (Request $request) {
         if ($request->user()->hasVerifiedEmail()) {
             return response()->json(['message' => 'Already verified']);
@@ -30,7 +34,7 @@ Route::middleware('auth:api')->group(function () {
     // User management
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::post('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 });
 
@@ -52,31 +56,12 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     return response()->json(['message' => 'Email verified!']);
 })->middleware('signed')->name('verification.verify');
 
-// Google OAuth
-Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect']);
-Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
+// Social Login
+Route::get('/auth/{provider}/redirect', [GoogleAuthController::class, 'redirectToProvider']);
+Route::get('/auth/{provider}/callback', [GoogleAuthController::class, 'handleProviderCallback']);
 
 
 // Facebook OAuth
-Route::get('/auth/facebook/redirect', function () {
-    return Socialite::driver('facebook')->stateless()->redirect();
-});
 
-Route::get('/auth/facebook/callback', function () {
-    $facebookUser = Socialite::driver('facebook')->stateless()->user();
-
-    $user = User::updateOrCreate([
-        'email' => $facebookUser->getEmail(),
-    ], [
-        'name' => $facebookUser->getName(),
-        'facebook_id' => $facebookUser->getId(),
-        'password' => Hash::make(Str::random(24)), // dummy password
-    ]);
-
-    $token = JWTAuth::fromUser($user);
-
-    return response()->json([
-        'token' => $token,
-        'user' => $user,
-    ]);
-});
+Route::get('/auth/{provider}/redirect', [GoogleAuthController::class, 'redirectToProvider']);
+Route::get('/auth/{provider}/callback', [GoogleAuthController::class, 'handleProviderCallback']);

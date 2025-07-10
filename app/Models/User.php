@@ -34,6 +34,17 @@ class User extends Authenticatable implements JWTSubject , MustVerifyEmail  // I
         'password' => 'hashed',
     ];
 
+     // ✅ Append this attribute to JSON output
+     protected $appends = ['profile_image_url'];
+
+     // ✅ This is the accessor
+     public function getProfileImageUrlAttribute()
+     {
+         return $this->profile_image 
+             ? asset('storage/' . $this->profile_image)
+             : null;
+     }
+
     public function isAdmin()
     {
         return $this->role === 'admin';
