@@ -8,10 +8,20 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use App\Http\Controllers\CategoryController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Social Login
+Route::get('/auth/{provider}/redirect', [GoogleAuthController::class, 'redirectToProvider']);
+Route::get('/auth/{provider}/callback', [GoogleAuthController::class, 'handleProviderCallback']);
+
+// Facebook OAuth
+Route::get('/auth/{provider}/redirect', [GoogleAuthController::class, 'redirectToProvider']);
+Route::get('/auth/{provider}/callback', [GoogleAuthController::class, 'handleProviderCallback']);
+
 
 // Email verification routes
 Route::middleware('auth:api')->group(function () {
@@ -30,12 +40,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-
-    // User management
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::post('/users/{id}', [UserController::class, 'update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 });
 
 Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
@@ -56,12 +60,16 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     return response()->json(['message' => 'Email verified!']);
 })->middleware('signed')->name('verification.verify');
 
-// Social Login
-Route::get('/auth/{provider}/redirect', [GoogleAuthController::class, 'redirectToProvider']);
-Route::get('/auth/{provider}/callback', [GoogleAuthController::class, 'handleProviderCallback']);
+Route::middleware(['auth:api', 'admin'])->group(function () {
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::post('/categories/{id}', [CategoryController::class, 'update']);  // Use PUT or PATCH
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+     // User management
+     Route::get('/users', [UserController::class, 'index']);
+     Route::get('/users/{id}', [UserController::class, 'show']);
+     Route::post('/users/{id}', [UserController::class, 'update']);
+     Route::delete('/users/{id}', [UserController::class, 'destroy']);
+});
 
-
-// Facebook OAuth
-
-Route::get('/auth/{provider}/redirect', [GoogleAuthController::class, 'redirectToProvider']);
-Route::get('/auth/{provider}/callback', [GoogleAuthController::class, 'handleProviderCallback']);

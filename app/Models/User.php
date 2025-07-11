@@ -21,6 +21,7 @@ class User extends Authenticatable implements JWTSubject , MustVerifyEmail  // I
         'role',
         'google_id',
         'avatar',
+        'is_admin', 
     ];
     
 
@@ -45,11 +46,12 @@ class User extends Authenticatable implements JWTSubject , MustVerifyEmail  // I
              : null;
      }
 
-    public function isAdmin()
-    {
-        return $this->role === 'admin';
-    }
-
+     public function isAdmin()
+     {
+         // Example: check if 'role' column equals 'admin'
+         return $this->role === 'admin';
+     }
+     
     // Implement JWTSubject methods:
     public function getJWTIdentifier()
     {
