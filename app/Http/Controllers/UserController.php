@@ -24,19 +24,26 @@ class UserController extends Controller
     }
     
 
-    // Show a single user by ID
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $user = User::find($id);
+    
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
     
+        // Optional: only allow self-view or admin
+        if ($request->user()->id !== $user->id && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+    
         $user->profile_image_url = $user->profile_image ? asset('storage/' . $user->profile_image) : null;
-
     
         return response()->json($user);
     }
+    
+    
+    
     
 
     public function update(Request $request, $id)
@@ -46,23 +53,53 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
     
+        // Authorization check: Only the user themselves or an admin can update
+        if ($request->user()->id !== $user->id && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Forbidden: You can only update your own profile unless you are an admin.'], 403);
+        }
+    
         try {
-            $validated = $request->validate([
+            $rules = [
                 'name' => 'sometimes|string|max:255',
                 'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
                 'password' => 'sometimes|string|min:6|confirmed',
-                'role' => 'sometimes|string|in:user,admin',
                 'image' => 'sometimes|mimes:jpg,jpeg,png,gif,webp,bmp|max:2048',
-            ]);
+            ];
     
+            // Admins can update role — include 'admin' now
+            if ($request->user()->isAdmin()) {
+                $rules['role'] = 'sometimes|string|in:user,company,admin';
+            } else {
+                // Non-admins must not touch the role
+                if ($request->has('role')) {
+                    return response()->json(['message' => 'Forbidden: You are not authorized to change user roles.'], 403);
+                }
+            }
+    
+            $validated = $request->validate($rules);
+    
+            // Prevent demoting the last admin
+            if (
+                $request->user()->isAdmin() &&
+                isset($validated['role']) &&
+                $user->role === 'admin' &&
+                $validated['role'] !== 'admin' &&
+                User::where('role', 'admin')->count() === 1
+            ) {
+                return response()->json(['message' => 'You cannot demote the only remaining admin.'], 403);
+            }
+    
+            // Hash new password if provided
             if (isset($validated['password'])) {
                 $validated['password'] = Hash::make($validated['password']);
             }
     
+            // Handle image upload
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $path = $image->store('profile_images', 'public');
     
+                // Delete old image
                 if ($user->profile_image) {
                     Storage::disk('public')->delete($user->profile_image);
                 }
@@ -71,7 +108,7 @@ class UserController extends Controller
             }
     
             $user->update($validated);
-            $user->refresh(); // reload fresh data
+            $user->refresh();
     
             $user->profile_image_url = $user->profile_image ? asset('storage/' . $user->profile_image) : null;
     
@@ -87,7 +124,7 @@ class UserController extends Controller
     
 
     // Delete a user
-    public function destroy($id)
+    public function destroy(Request $request, $id) // Added Request for user check
     {
         $user = User::find($id);
 
@@ -95,8 +132,23 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
 
+        // Authorization check: Only admins can delete users (or potentially self-delete, but typically only admin)
+        if (!$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Forbidden: Admins only can delete users.'], 403);
+        }
+
+        // Optional: Prevent an admin from deleting themselves if needed
+        if ($request->user()->id === $user->id) {
+            return response()->json(['message' => 'Forbidden: You cannot delete your own admin account.'], 403);
+        }
+
+        // Delete the profile image if it exists
+        if ($user->profile_image) {
+            Storage::disk('public')->delete($user->profile_image);
+        }
+
         $user->delete();
 
-        return response()->json(['message' => 'User deleted']);
+        return response()->json(['message' => 'User deleted successfully.']);
     }
 }

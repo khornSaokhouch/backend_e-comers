@@ -97,7 +97,10 @@ class AuthController extends Controller
 
     // Get logged in user profile
     public function profile(Request $request)
-    {
-        return response()->json(auth()->user());
-    }
+{
+    return response()->json([
+        'user' => auth()->user()
+    ]);
+}
+
 }
