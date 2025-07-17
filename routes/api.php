@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SellerController;
+use App\Http\Controllers\AdminNotificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Verified;
@@ -62,6 +64,14 @@ Route::middleware('auth:api')->group(function () {
     // View/update own user data
     Route::get('/users/{id}', [UserController::class, 'show']);
     Route::post('/users/{id}', [UserController::class, 'update']);
+
+    //Become Sellers   
+    Route::post('/sellers', [SellerController::class, 'store']); // Create a new seller
+    // Route::get('/sellers', [SellerController::class, 'index']); // List all sellers
+    // Route::get('/sellers/{id}', [SellerController::class, 'show']); // Show a single seller by ID
+    // Route::post('/sellers/{id}', [SellerController::class, 'update']); // Update an existing seller
+    // Route::delete('/sellers/{id}', [SellerController::class, 'destroy']); // Delete a seller
+
 });
 
 
@@ -73,10 +83,21 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);  // List all users (admin only)
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
+        // Seller Management
+    Route::get('/sellers', [SellerController::class, 'index']);
+    Route::put('/sellers/{id}/approve', [SellerController::class, 'approve']);
+    Route::put('/sellers/{id}/reject', [SellerController::class, 'reject']);
+    Route::delete('/sellers/{id}', [SellerController::class, 'destroy']); // Delete a seller
+
+
     // Category Management
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::post('/categories/{id}', [CategoryController::class, 'update']); // or use PUT/PATCH
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+
+
+     // Admin Notifications
+    Route::get('/notifications', [AdminNotificationController::class, 'adminNotifications']);
 });
