@@ -6,6 +6,9 @@ use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\AdminNotificationController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ProductController;
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Verified;
@@ -74,6 +77,29 @@ Route::middleware('auth:api')->group(function () {
 
 });
 
+// ------------------------------
+// Company-Only Routes
+// ------------------------------
+Route::middleware(['auth:api', 'company'])->group(function () {
+
+    // Company Profile Management
+    Route::get('/companies', [CompanyController::class, 'index']);
+    Route::get('/companies/{id}', [CompanyController::class, 'show']);
+    Route::post('/companies', [CompanyController::class, 'store']);
+    Route::put('/companies/{id}', [CompanyController::class, 'update']);
+    Route::delete('/companies/{id}', [CompanyController::class, 'destroy']);
+
+
+    // Product Management
+    Route::get('/products', [ProductController::class, 'index']);       // List all products
+    Route::get('/products/{id}', [ProductController::class, 'show']);  // Show single product
+    Route::post('/products', [ProductController::class, 'store']);      // Create product
+    Route::put('/products/{id}', [ProductController::class, 'update']);  // Update product (full)
+    Route::delete('/products/{product}', [ProductController::class, 'destroy']); // Delete product
+
+});
+
+
 
 // ------------------------------
 // Admin-Only Routes
@@ -101,3 +127,4 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
      // Admin Notifications
     Route::get('/notifications', [AdminNotificationController::class, 'adminNotifications']);
 });
+
