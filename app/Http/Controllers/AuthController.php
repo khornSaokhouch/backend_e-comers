@@ -31,6 +31,8 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'profile_image' => $imagePath,
+            'role' => $request->input('role', 'user'), // default to 'user'
+
         ]);
     
         $token = JWTAuth::fromUser($user);

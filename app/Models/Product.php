@@ -7,6 +7,7 @@ class Product extends Model
 {
     protected $fillable = [
         'user_id',
+        'store_id',
         'category_id',
         'name',
         'description',
@@ -33,4 +34,10 @@ class Product extends Model
             ? asset('storage/' . $this->product_image) 
             : null;
     }
+
+    public function favourites()
+{
+    return $this->hasMany(Favourite::class);
+}
+
 }

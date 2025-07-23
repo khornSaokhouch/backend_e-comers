@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Product;
 
 class CategoryController extends Controller
 {
@@ -68,6 +69,8 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
+    
+
     // Delete a category
     public function destroy($id)
     {
@@ -81,4 +84,12 @@ class CategoryController extends Controller
 
         return response()->json(['message' => 'Category deleted successfully']);
     }
+
+
+    public function products($categoryId)
+{
+    $products = Product::where('category_id', $categoryId)->get();
+    return response()->json($products);
+}
+
 }

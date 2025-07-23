@@ -11,24 +11,30 @@ class ProductController extends Controller
     // List all products
     public function index()
     {
+        // Return ALL products for any authenticated user
         return response()->json(Product::all());
     }
-
-// Show a single product
-public function show($id)
-{
-    $userId = auth()->id();
-    $products = Product::where('user_id', $userId)->get();
-
-    return response()->json($products);
-}
-
+    
+    public function show($id)
+    {
+        $product = Product::find($id);
+    
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+    
+        // Return the product — no owner restriction, everyone can see it
+        return response()->json($product);
+    }
+    
 
 
 public function store(Request $request)
 {
     $validated = $request->validate([
+
         'category_id'    => 'required|exists:categories,id',
+        'store_id'       => 'required|exists:stores,id',
         'name'           => 'required|string|max:255',
         'description'    => 'nullable|string',
         'product_image'  => 'nullable|image|mimes:jpg,jpeg,png,webp',
@@ -60,6 +66,7 @@ public function update(Request $request, $id)
     // Validate the input
     $validated = $request->validate([
         'category_id'   => 'sometimes|exists:categories,id',
+        'store_id'      => 'sometimes|exists:stores,id',
         'name'          => 'sometimes|string|max:255',
         'description'   => 'sometimes|nullable|string',
         'product_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',

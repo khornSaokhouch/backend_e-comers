@@ -4,20 +4,17 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use App\Models\Store;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    public const HOME = '/home';
-
-    public function boot(): void
+    public function boot()
     {
-        $this->routes(function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/api.php'));
+        parent::boot();
 
-            Route::middleware('web')
-                ->group(base_path('routes/web.php'));
+        // Custom route binding using seller_id instead of id
+        Route::bind('store', function ($value) {
+            return Store::where('seller_id', $value)->firstOrFail();
         });
     }
 }

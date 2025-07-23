@@ -28,4 +28,15 @@ class Category extends Model
     {
         return $this->image ? asset('storage/' . $this->image) : null;
     }
+
+    public function stocks()
+    {
+        return $this->hasMany(Stock::class, 'category_id');
+    }
+
+    // Many-to-many relationship with Promotion
+    public function promotions()
+    {
+        return $this->belongsToMany(Promotion::class, 'promotion_category', 'category_id', 'promotion_id')->withTimestamps();
+    }
 }
