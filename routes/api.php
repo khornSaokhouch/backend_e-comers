@@ -16,11 +16,21 @@ use App\Http\Controllers\PromotionCategoryController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ShoppingCartItemController;
 use App\Http\Controllers\ShoppingCartController;
+use App\Http\Controllers\ShopOrderController;
+use App\Http\Controllers\UserPaymentMethodController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\OrderHistoryController;
+use App\Http\Controllers\ShippingMethodController;
+use App\Http\Controllers\OrderStatusController;
+use App\Http\Controllers\PaymentTypeController;
 use App\Http\Controllers\ProductItemController;
+use App\Http\Controllers\OrderLineController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Verified;
 use App\Models\User;
+
+use App\Http\Controllers\TelegramWebhookController;
 
 
 // ------------------------------
@@ -33,7 +43,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/auth/{provider}/redirect', [GoogleAuthController::class, 'redirectToProvider']);
 Route::get('/auth/{provider}/callback', [GoogleAuthController::class, 'handleProviderCallback']);
 
-
+// Telegram Webhook
+Route::post('/telegram/webhook', [TelegramWebhookController::class, 'handle']);
 
 // ------------------------------
 // Email Verification Routes
@@ -58,9 +69,35 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
 
 // Make public
 
-// Product Routes (No authentication required)
-Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{id}', [ProductController::class, 'show']);
+    // Product Routes (No authentication required)
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{id}', [ProductController::class, 'show']);
+
+    // Category Routes (No authentication required)
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
+    // Product Category Management
+    Route::get('/categories/{category}/products', [CategoryController::class, 'products']);
+
+    // Payment Types
+    Route::get('/payment-types', [PaymentTypeController::class, 'index']);
+    Route::get('/payment-types/{id}', [PaymentTypeController::class, 'show']);
+
+    // Shipping Methods
+
+    Route::get('/shipping-methods', [ShippingMethodController::class, 'index']);
+    Route::get('/shipping-methods/{id}', [ShippingMethodController::class, 'show']);
+
+    // Shopping Order Management
+    Route::get('/shop-orders', [ShopOrderController::class, 'index']);
+    Route::get('/shop-orders/{id}', [ShopOrderController::class, 'show']);
+
+    // order statuses
+    Route::get('/order-statuses', [OrderStatusController::class, 'index']);
+    Route::get('/order-statuses/{id}', [OrderStatusController::class, 'show']);
+
+
 
 
 
@@ -69,7 +106,7 @@ Route::get('/products/{id}', [ProductController::class, 'show']);
 // ------------------------------
 Route::middleware('auth:api')->group(function () {
     // Profile
-    Route::get('/profile', [AuthController::class, 'profile']);
+   Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
 
@@ -97,19 +134,42 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/shopping-carts/{id}', [ShoppingCartController::class, 'update']);
     Route::delete('/shopping-carts/{id}', [ShoppingCartController::class, 'destroy']);
 
-         // Shopping Cart Items Management
-    Route::get('/shopping-cart-items', [ShoppingCartItemController::class, 'index']);
-    Route::get('/shopping-cart-items/{id}', [ShoppingCartItemController::class, 'show']);
-    Route::post('/shopping-cart-items', [ShoppingCartItemController::class, 'store']);
-    Route::put('/shopping-cart-items/{id}', [ShoppingCartItemController::class, 'update']);
-    Route::delete('/shopping-cart-items/{id}', [ShoppingCartItemController::class, 'destroy']);
-
-
     // Favourite Products
     Route::get('/favourites', [FavouriteController::class, 'index']);
     Route::get('/favourites/{id}', [FavouriteController::class, 'show']);
     Route::post('/favourites', [FavouriteController::class, 'store']);
     Route::delete('/favourites/{id}', [FavouriteController::class, 'destroy']);
+
+
+        // Shop Orders
+
+    Route::post('/shop-orders', [ShopOrderController::class, 'store']);
+    Route::get('/shop-orders/user/{userId}', [ShopOrderController::class, 'showOrdersByUser']);
+
+
+
+
+    // User Payment Methods
+    Route::get('/user-payment-methods', [UserPaymentMethodController::class, 'index']);
+    Route::get('/user-payment-methods/{id}', [UserPaymentMethodController::class, 'show']);
+    Route::post('/user-payment-methods', [UserPaymentMethodController::class, 'store']);
+    Route::put('/user-payment-methods/{id}', [UserPaymentMethodController::class, 'update']);
+    Route::delete('/user-payment-methods/{id}', [UserPaymentMethodController::class, 'destroy']);
+
+
+
+    // Order Histories
+    Route::get('/order-histories', [OrderHistoryController::class, 'index']);
+    Route::get('/order-histories/{id}', [OrderHistoryController::class, 'show']);
+    Route::post('/order-histories', [OrderHistoryController::class, 'store']);
+    Route::put('/order-histories/{id}', [OrderHistoryController::class, 'update']);
+    Route::delete('/order-histories/{id}', [OrderHistoryController::class, 'destroy']);
+
+
+
+
+
+ 
 
 });
 
@@ -117,7 +177,7 @@ Route::middleware(['auth:api', 'allow.admin.or.company'])->group(function () {
 
     // User Management
     Route::get('/users', [UserController::class, 'index']);
-    Route::get('/profile', [AuthController::class, 'profile']);
+    
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
     // Company Profile Management
@@ -134,8 +194,7 @@ Route::middleware(['auth:api', 'allow.admin.or.company'])->group(function () {
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);
 
-    // Product Category Management
-    Route::get('/categories/{category}/products', [CategoryController::class, 'products']);
+
 
     // Seller Management
     Route::get('/sellers', [SellerController::class, 'index']);
@@ -151,9 +210,8 @@ Route::middleware(['auth:api', 'allow.admin.or.company'])->group(function () {
     Route::delete('/product-items/{id}', [ProductItemController::class, 'destroy']);
 
     // Category Management
-    Route::get('/categories', [CategoryController::class, 'index']);
+
     Route::post('/categories', [CategoryController::class, 'store']);
-    Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::post('/categories/{id}', [CategoryController::class, 'update']); // or use PUT/PATCH
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
@@ -164,7 +222,46 @@ Route::middleware(['auth:api', 'allow.admin.or.company'])->group(function () {
     Route::put('/stores/{id}', [StoreController::class, 'update']);
     Route::delete('/stores/{id}', [StoreController::class, 'destroy']);
 
+    // Payment Types
 
+    Route::post('/payment-types', [PaymentTypeController::class, 'store']);
+    Route::put('/payment-types/{id}', [PaymentTypeController::class, 'update']);
+    Route::delete('/payment-types/{id}', [PaymentTypeController::class, 'destroy']);
+
+    // shop order
+    Route::put('/shop-orders/{id}', [ShopOrderController::class, 'update']);
+    Route::delete('/shop-orders/{id}', [ShopOrderController::class, 'destroy']);
+    Route::patch('/shop-orders/{id}/status', [ShopOrderController::class, 'updateStatus']); // ✅ NEW
+
+
+    // Order Lines
+    Route::get('/order-lines', [OrderLineController::class, 'index']);
+    Route::get('/order-lines/{id}', [OrderLineController::class, 'show']);
+    Route::post('/order-lines', [OrderLineController::class, 'store']);
+    Route::put('/order-lines/{id}', [OrderLineController::class, 'update']);
+    Route::delete('/order-lines/{id}', [OrderLineController::class, 'destroy']);
+
+
+
+    // Invoices
+    Route::get('/invoices', [InvoiceController::class, 'index']);
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
+    Route::post('/invoices', [InvoiceController::class, 'store']);
+    Route::put('/invoices/{id}', [InvoiceController::class, 'update']);
+    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy']);      
+
+    // Shipping Methods
+
+    Route::post('/shipping-methods', [ShippingMethodController::class, 'store']);
+    Route::put('/shipping-methods/{id}', [ShippingMethodController::class, 'update']);
+    Route::delete('/shipping-methods/{id}', [ShippingMethodController::class, 'destroy']);
+        
+    // Order Statuses
+
+    Route::post('/order-statuses', [OrderStatusController::class, 'store']);
+    Route::put('/order-statuses/{id}', [OrderStatusController::class, 'update']);
+    Route::delete('/order-statuses/{id}', [OrderStatusController::class, 'destroy']);  
+    
 
     // Promotion Routes
     Route::get('/promotions', [PromotionController::class, 'index']);

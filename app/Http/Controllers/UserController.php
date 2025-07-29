@@ -123,32 +123,29 @@ class UserController extends Controller
     
     
 
-    // Delete a user
-    public function destroy(Request $request, $id) // Added Request for user check
+    public function destroy(Request $request, $id)
     {
         $user = User::find($id);
-
+    
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-
-        // Authorization check: Only admins can delete users (or potentially self-delete, but typically only admin)
-        if (!$request->user()->isAdmin()) {
-            return response()->json(['message' => 'Forbidden: Admins only can delete users.'], 403);
-        }
-
-        // Optional: Prevent an admin from deleting themselves if needed
+    
+        // Only admin can delete users
+        abort_unless($request->user()->isAdmin(), 403, 'Admins only can delete users.');
+    
+        // Prevent admin from deleting themselves
         if ($request->user()->id === $user->id) {
             return response()->json(['message' => 'Forbidden: You cannot delete your own admin account.'], 403);
         }
-
-        // Delete the profile image if it exists
-        if ($user->profile_image) {
+    
+        // Delete profile image if it exists
+        if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
             Storage::disk('public')->delete($user->profile_image);
         }
-
+    
         $user->delete();
-
+    
         return response()->json(['message' => 'User deleted successfully.']);
     }
 }

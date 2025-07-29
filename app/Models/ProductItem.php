@@ -2,31 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Company;
 
 class ProductItem extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'product_id',
         'quantity_in_stock',
+        'company_id', // Add this if it's fillable
     ];
 
-    /**
-     * The parent product this item belongs to.
-     */
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
-    /**
-     * Shopping cart items that reference this product item.
-     */
     public function shoppingCartItems()
     {
         return $this->hasMany(ShoppingCartItem::class, 'product_item_id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }

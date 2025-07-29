@@ -69,48 +69,52 @@ class ProductController extends Controller
     }
     
     
-
-        
-        
-public function update(Request $request, $id)
-{
-    // Find the product or fail
-    $product = Product::findOrFail($id);
-
-    // Validate the input
-    $validated = $request->validate([
-        'category_id'   => 'sometimes|exists:categories,id',
-        'store_id'      => 'sometimes|exists:stores,id',
-        'name'          => 'sometimes|string|max:255',
-        'description'   => 'sometimes|nullable|string',
-        'product_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        'price'         => 'sometimes|integer|min:0',
-    ]);
-
-    // Handle image upload if a new file is provided
-    if ($request->hasFile('product_image')) {
-        // Delete old image if it exists
-        if ($product->product_image) {
-            Storage::disk('public')->delete($product->product_image);
+    public function update(Request $request, $id)
+    {
+        $product = Product::with('productItems')->findOrFail($id);
+    
+        $validated = $request->validate([
+            'category_id'       => 'sometimes|exists:categories,id',
+            'store_id'          => 'sometimes|exists:stores,id',
+            'name'              => 'sometimes|string|max:255',
+            'description'       => 'sometimes|nullable|string',
+            'product_image'     => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,bmp,avif,svg,tiff|max:5120',
+            'price'             => 'sometimes|numeric|min:0',
+            'quantity_in_stock' => 'sometimes|integer|min:0',
+        ]);
+    
+        if ($request->hasFile('product_image')) {
+            if ($product->product_image) {
+                Storage::disk('public')->delete($product->product_image);
+            }
+    
+            $path = $request->file('product_image')->store('product_images', 'public');
+            $validated['product_image'] = $path;
         }
-
-        // Store the new image
-        $path = $request->file('product_image')->store('product_images', 'public');
-        $validated['product_image'] = $path;
+    
+        $product->update($validated);
+    
+        if (array_key_exists('quantity_in_stock', $validated)) {
+            $productItem = $product->productItems->first();
+    
+            if ($productItem) {
+                $productItem->update(['quantity_in_stock' => $validated['quantity_in_stock']]);
+            } else {
+                ProductItem::create([
+                    'product_id' => $product->id,
+                    'quantity_in_stock' => $validated['quantity_in_stock'],
+                ]);
+            }
+        }
+    
+        $product->refresh();
+    
+        return response()->json([
+            'message' => 'Product updated successfully',
+            'product' => $product->makeHidden(['product_image'])->append('product_image_url'),
+        ], 200);
     }
-
-    // Update the product
-    $product->update($validated);
-
-    return response()->json([
-        'message' => 'Product updated successfully',
-        'product' => $product->makeHidden(['product_image'])->append('product_image_url'),
-    ], 200);
-}
-
-
-
-        
+    
 
 public function destroy($id)
 {

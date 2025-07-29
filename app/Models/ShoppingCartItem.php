@@ -15,17 +15,11 @@ class ShoppingCartItem extends Model
         'qty',
     ];
 
-    /**
-     * The cart this item belongs to.
-     */
     public function cart()
     {
         return $this->belongsTo(ShoppingCart::class, 'cart_id');
     }
 
-    /**
-     * The product item this cart item refers to.
-     */
     public function productItem()
     {
         return $this->belongsTo(ProductItem::class, 'product_item_id');
