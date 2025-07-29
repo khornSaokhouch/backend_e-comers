@@ -17,7 +17,7 @@ class OrderStatusController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'status' => 'required|string|max:255|unique:order_status,status',
+            'status' => 'required|string|max:255|unique:order_statuses,status',
         ]);
 
         $orderStatus = OrderStatus::create($validated);
@@ -42,7 +42,7 @@ class OrderStatusController extends Controller
         $orderStatus = OrderStatus::findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|string|max:255|unique:order_status,status,' . $id,
+            'status' => 'required|string|max:255|unique:order_statuses,status,' . $id,
         ]);
 
         $orderStatus->update($validated);
