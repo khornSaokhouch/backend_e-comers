@@ -1,19 +1,21 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'], // Add sanctum if you're using Sanctum
 
-    'allowed_methods' => ['*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'], // ✅ Needed for API and Sanctum
 
-    'allowed_origins' => ['http://localhost:3000','https://frontend-e-8c9k.vercel.app'], // ⚠️ Exact match!
+    'allowed_methods' => ['*'], // Allows all HTTP methods (GET, POST, etc.)
+
+    'allowed_origins' => ['https://frontend-e.onrender.com'], // ✅ Your Next.js frontend
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => ['*'], // Allow all headers
 
     'exposed_headers' => [],
 
     'max_age' => 0,
 
-    'supports_credentials' => true, // ✅ REQUIRED!
+    'supports_credentials' => true, // ✅ Required for Sanctum sessions/cookies
 ];
+
