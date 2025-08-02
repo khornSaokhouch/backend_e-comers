@@ -25,6 +25,8 @@ use App\Http\Controllers\OrderStatusController;
 use App\Http\Controllers\PaymentTypeController;
 use App\Http\Controllers\ProductItemController;
 use App\Http\Controllers\OrderLineController;
+use App\Http\Controllers\UserReviewController;
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Verified;
@@ -97,6 +99,10 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     Route::get('/order-statuses', [OrderStatusController::class, 'index']);
     Route::get('/order-statuses/{id}', [OrderStatusController::class, 'show']);
 
+    // Store 
+    Route::get('/stores', [StoreController::class, 'index']);
+    Route::get('/stores/{id}', [StoreController::class, 'show']);
+
 
 
 
@@ -139,6 +145,14 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/favourites/{id}', [FavouriteController::class, 'show']);
     Route::post('/favourites', [FavouriteController::class, 'store']);
     Route::delete('/favourites/{id}', [FavouriteController::class, 'destroy']);
+
+    // User Review 
+    Route::get('/user-reviews', [UserReviewController::class, 'index']);
+    Route::get('/user-reviews/{id}', [UserReviewController::class, 'show']);
+    Route::post('/user-reviews', [UserReviewController::class, 'store']);
+    Route::put('/user-reviews/{id}', [UserReviewController::class, 'update']);
+
+    Route::delete('/user-reviews/{id}', [UserReviewController::class, 'destroy']);
 
 
         // Shop Orders
@@ -216,8 +230,7 @@ Route::middleware(['auth:api', 'allow.admin.or.company'])->group(function () {
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
     // Store Routes
-    Route::get('/stores', [StoreController::class, 'index']);
-    Route::get('/stores/{id}', [StoreController::class, 'show']);
+
     Route::post('/stores', [StoreController::class, 'store']);
     Route::put('/stores/{id}', [StoreController::class, 'update']);
     Route::delete('/stores/{id}', [StoreController::class, 'destroy']);

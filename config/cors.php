@@ -5,7 +5,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'], // ⚠️ Exact match!
+    'allowed_origins' => ['http://localhost:3000','https://frontend-e-8c9k.vercel.app'], // ⚠️ Exact match!
 
     'allowed_origins_patterns' => [],
 

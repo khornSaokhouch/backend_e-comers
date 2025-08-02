@@ -52,19 +52,31 @@ class ShoppingCartController extends Controller
         if ($request->has('items')) {
             foreach ($request->items as $itemData) {
                 try {
-                    ShoppingCartItem::create([
+                    // Create cart item
+                    $cartItem = ShoppingCartItem::create([
                         'cart_id' => $cart->id,
                         'product_item_id' => $itemData['product_item_id'],
                         'qty' => $itemData['qty'],
                     ]);
+        
+                    // Deduct stock from ProductItem
+                    $productItem = \App\Models\ProductItem::findOrFail($itemData['product_item_id']);
+        
+                    if ($productItem->quantity_in_stock < $itemData['qty']) {
+                        throw new \Exception('Insufficient stock for product item ID: ' . $productItem->id);
+                    }
+        
+                    $productItem->decrement('quantity_in_stock', $itemData['qty']);
+        
                 } catch (\Exception $e) {
-                    \Log::error('Failed to create cart item: ' . $e->getMessage());
-                    return response()->json(['message' => 'Failed to add item'], 500);
+                    \Log::error('Failed to create cart item or update stock: ' . $e->getMessage());
+                    return response()->json(['message' => 'Failed to add item: ' . $e->getMessage()], 500);
                 }
             }
         } else {
             \Log::info('No items to add to cart.');
         }
+        
     
         $cart->load('items.productItem.product');
     
