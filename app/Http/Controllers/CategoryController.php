@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Product;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -24,34 +25,29 @@ class CategoryController extends Controller
         ]);
     
         if ($request->hasFile('image')) {
-            // Store the image on Backblaze B2 disk inside 'category_images' folder
+            // Store image in 'category_images' on Backblaze B2 (S3-compatible)
             $path = $request->file('image')->store('category_images', 'b2');
             $validated['image'] = $path;
         }
     
-        // Assign the current authenticated user id
         $validated['user_id'] = auth()->id();
-    
-        // Create the category record
         $category = Category::create($validated);
     
-        // Generate URL to the stored image
-        $imageUrl = $category->image ? Storage::disk('b2')->url($category->image) : null;
+        $imageUrl = null;
     
-        // Force HTTPS if URL is HTTP (fallback, optional if APP_URL is correct)
-        if ($imageUrl && str_starts_with($imageUrl, 'http://')) {
-            $imageUrl = preg_replace('/^http:/i', 'https:', $imageUrl);
+        if ($category->image) {
+            // Use temporary signed URL for private B2 bucket
+            $imageUrl = Storage::disk('b2')->temporaryUrl(
+                $category->image,
+                now()->addMinutes(30) // Link valid for 30 minutes
+            );
         }
     
-        // Return JSON response with the new category and image URL
         return response()->json([
             'category' => $category,
             'image_url' => $imageUrl,
         ], 201);
     }
-    
-    
-    
 
     // Show a single category
     public function show($id)
