@@ -60,15 +60,16 @@ return [
             'report' => false,
         ],
 
-            'b2' => [
+    'b2' => [
         'driver' => 's3',
         'key' => env('B2_KEY_ID'),
         'secret' => env('B2_APPLICATION_KEY'),
-        'region' => env('B2_REGION'),
+        'region' => env('B2_REGION'), // ✅ must be a valid AWS-style region
         'bucket' => env('B2_BUCKET'),
-        'endpoint' => env('B2_ENDPOINT'),
-        'use_path_style_endpoint' => true,
+        'endpoint' => env('B2_ENDPOINT'), // ✅ your custom B2 S3 endpoint
+        'use_path_style_endpoint' => true, // ✅ required for B2
     ],
+
 
 
     ],
