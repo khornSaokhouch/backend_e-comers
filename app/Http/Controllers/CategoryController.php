@@ -16,26 +16,31 @@ class CategoryController extends Controller
         return response()->json($categories);
     }
 
-    // Store a new category
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|max:2048', // Optional image upload
         ]);
-
+    
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('category_images', 'public');
-            $validated['image'] = $path;
+            // Original code:
+            // $path = $request->file('image')->store('category_images', 'public');
+            // $validated['image'] = $path;
+    
+            // Using Backblaze B2 storage:
+            $path = $request->file('image')->store('category_images', 'b2');
+            $validated['image'] = Storage::disk('b2')->url($path);
         }
-
+    
         // Associate category with the authenticated user
         $validated['user_id'] = auth()->id();
-
+    
         $category = Category::create($validated);
-
+    
         return response()->json($category, 201);
     }
+    
 
     // Show a single category
     public function show($id)
