@@ -23,33 +23,22 @@ class CategoryController extends Controller
             'image' => 'nullable|image|max:2048',
         ]);
     
-        // Initialize image path as null
-        $imagePath = null;
-    
         // Store in Backblaze B2 if image is uploaded
         if ($request->hasFile('image')) {
-            try {
-                // Store the file on the 'b2' disk inside 'category_images' folder
-                $imagePath = $request->file('image')->store('category_images', 'b2');
-    
-                // Log the upload path for debugging
-                \Log::info("Image uploaded to B2: " . $imagePath);
-    
-                // Assign image path to validated data
-                $validated['image'] = $imagePath;
-            } catch (\Exception $e) {
-                \Log::error('Error uploading image to B2: ' . $e->getMessage());
-                return response()->json(['message' => 'Image upload failed.'], 500);
-            }
+            $path = $request->file('image')->store('category_images', 'b2');
+            $validated['image'] = $path;
         }
     
         $validated['user_id'] = auth()->id();
     
-        // Create category
         $category = Category::create($validated);
     
-        // Get full URL of the image if exists
-        $imageUrl = $imagePath ? Storage::disk('b2')->url($imagePath) : null;
+        $imageUrl = $category->image ? Storage::disk('b2')->url($category->image) : null;
+    
+        // Force https to avoid mixed content warning
+        if ($imageUrl && strpos($imageUrl, 'http://') === 0) {
+            $imageUrl = preg_replace("/^http:/i", "https:", $imageUrl);
+        }
     
         return response()->json([
             'category' => $category,
