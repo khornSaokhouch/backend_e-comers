@@ -24,16 +24,26 @@ class CategoryController extends Controller
         ]);
     
         if ($request->hasFile('image')) {
+            // Store the image on Backblaze B2 disk inside 'category_images' folder
             $path = $request->file('image')->store('category_images', 'b2');
             $validated['image'] = $path;
         }
     
+        // Assign the current authenticated user id
         $validated['user_id'] = auth()->id();
+    
+        // Create the category record
         $category = Category::create($validated);
     
-        // ✅ This generates the actual HTTPS B2 S3 URL
+        // Generate URL to the stored image
         $imageUrl = $category->image ? Storage::disk('b2')->url($category->image) : null;
     
+        // Force HTTPS if URL is HTTP (fallback, optional if APP_URL is correct)
+        if ($imageUrl && str_starts_with($imageUrl, 'http://')) {
+            $imageUrl = preg_replace('/^http:/i', 'https:', $imageUrl);
+        }
+    
+        // Return JSON response with the new category and image URL
         return response()->json([
             'category' => $category,
             'image_url' => $imageUrl,
