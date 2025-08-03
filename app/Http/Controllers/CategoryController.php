@@ -12,20 +12,23 @@ class CategoryController extends Controller
     // List all categories with temporary signed URLs for images
     public function index()
     {
-        $categories = Category::all()->map(function ($category) {
+        $publicUrlBase = env('B2_PUBLIC_URL');
+    
+        $categories = Category::all()->map(function ($category) use ($publicUrlBase) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
                 'image_url' => $category->image
-                    ? Storage::disk('b2')->temporaryUrl($category->image, now()->addMinutes(60))
+                    ? $publicUrlBase . '/' . $category->image
                     : null,
                 'user_id' => $category->user_id,
                 // add other fields if needed
             ];
         });
-
+    
         return response()->json($categories);
     }
+    
 
     // Store a new category with image upload to Backblaze B2 and return temporary URL
     public function store(Request $request)
