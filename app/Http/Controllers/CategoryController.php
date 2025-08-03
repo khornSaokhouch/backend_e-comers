@@ -12,17 +12,17 @@ class CategoryController extends Controller
     // List all categories with temporary signed URLs for images
     public function index()
     {
-        $publicUrlBase = env('B2_PUBLIC_URL');
-    
-        $categories = Category::all()->map(function ($category) use ($publicUrlBase) {
+        $categories = Category::all()->map(function ($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
                 'image_url' => $category->image
-                    ? $publicUrlBase . '/' . $category->image
+                    ? Storage::disk('b2')->temporaryUrl(
+                        $category->image,
+                        now()->addMinutes(60) // link valid for 60 mins
+                    )
                     : null,
                 'user_id' => $category->user_id,
-                // add other fields if needed
             ];
         });
     
