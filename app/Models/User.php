@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
 
-use Tymon\JWTAuth\Contracts\JWTSubject;  // Import the interface
-
-class User extends Authenticatable implements JWTSubject , MustVerifyEmail  // Implement the interface here
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
-    use HasFactory, Notifiable;  // Remove HasApiTokens if you only want JWT
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -21,9 +22,8 @@ class User extends Authenticatable implements JWTSubject , MustVerifyEmail  // I
         'role',
         'google_id',
         'avatar',
-        'is_admin', 
+        'is_admin',
     ];
-    
 
     protected $hidden = [
         'password',
@@ -35,24 +35,28 @@ class User extends Authenticatable implements JWTSubject , MustVerifyEmail  // I
         'password' => 'hashed',
     ];
 
-     // ✅ Append this attribute to JSON output
-     protected $appends = ['profile_image_url'];
+    protected $appends = ['profile_image_url'];
 
-     // ✅ This is the accessor
-     public function getProfileImageUrlAttribute()
-     {
-         return $this->profile_image 
-             ? asset('storage/' . $this->profile_image)
-             : null;
-     }
+    // ✅ Accessor for profile_image_url
+    public function getProfileImageUrlAttribute()
+    {
+        if (!$this->profile_image) {
+            return null;
+        }
 
-     public function isAdmin()
-     {
-         // Example: check if 'role' column equals 'admin'
-         return $this->role === 'admin';
-     }
-     
-    // Implement JWTSubject methods:
+        $disk = App::environment('local') ? 'public' : 'b2';
+
+        return $disk === 'public'
+            ? asset('storage/' . $this->profile_image)
+            : Storage::disk('b2')->temporaryUrl($this->profile_image, now()->addMinutes(60));
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    // JWT methods
     public function getJWTIdentifier()
     {
         return $this->getKey();
@@ -63,21 +67,19 @@ class User extends Authenticatable implements JWTSubject , MustVerifyEmail  // I
         return [];
     }
 
+    // Relationships
     public function seller()
-{
-    return $this->hasOne(Seller::class);
-}
+    {
+        return $this->hasOne(Seller::class);
+    }
 
-public function favourites()
-{
-    return $this->hasMany(Favourite::class);
-}
+    public function favourites()
+    {
+        return $this->hasMany(Favourite::class);
+    }
 
-
-public function shoppingCarts()
-{
-    return $this->hasMany(ShoppingCart::class);
-}
-
-
+    public function shoppingCarts()
+    {
+        return $this->hasMany(ShoppingCart::class);
+    }
 }

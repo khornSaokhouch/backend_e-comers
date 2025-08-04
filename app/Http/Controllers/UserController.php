@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\App;
 
 class UserController extends Controller
 {
@@ -17,15 +16,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Forbidden: Admins only'], 403);
         }
 
-        $disk = App::environment('local') ? 'public' : 'b2';
-
-        $users = User::all()->map(function ($user) use ($disk) {
-            $user->profile_image_url = $user->profile_image
-                ? $this->generateImageUrl($user->profile_image, $disk)
-                : null;
-            return $user;
-        });
-
+        $users = User::all();
         return response()->json($users);
     }
 
@@ -41,11 +32,6 @@ class UserController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $disk = App::environment('local') ? 'public' : 'b2';
-        $user->profile_image_url = $user->profile_image
-            ? $this->generateImageUrl($user->profile_image, $disk)
-            : null;
-
         return response()->json($user);
     }
 
@@ -59,8 +45,6 @@ class UserController extends Controller
         if ($request->user()->id !== $user->id && !$request->user()->isAdmin()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-
-        $disk = App::environment('local') ? 'public' : 'b2';
 
         try {
             $rules = [
@@ -78,6 +62,7 @@ class UserController extends Controller
 
             $validated = $request->validate($rules);
 
+            // Prevent demoting last admin
             if (
                 $request->user()->isAdmin() &&
                 isset($validated['role']) &&
@@ -92,6 +77,8 @@ class UserController extends Controller
                 $validated['password'] = Hash::make($validated['password']);
             }
 
+            $disk = app()->environment('local') ? 'public' : 'b2';
+
             if ($request->hasFile('image')) {
                 if ($user->profile_image) {
                     Storage::disk($disk)->delete($user->profile_image);
@@ -103,10 +90,6 @@ class UserController extends Controller
 
             $user->update($validated);
             $user->refresh();
-
-            $user->profile_image_url = $user->profile_image
-                ? $this->generateImageUrl($user->profile_image, $disk)
-                : null;
 
             return response()->json($user);
 
@@ -125,13 +108,15 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        abort_unless($request->user()->isAdmin(), 403, 'Admins only can delete users.');
+        if (!$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Forbidden: Admins only'], 403);
+        }
 
         if ($request->user()->id === $user->id) {
             return response()->json(['message' => 'Forbidden: You cannot delete your own admin account.'], 403);
         }
 
-        $disk = App::environment('local') ? 'public' : 'b2';
+        $disk = app()->environment('local') ? 'public' : 'b2';
 
         if ($user->profile_image && Storage::disk($disk)->exists($user->profile_image)) {
             Storage::disk($disk)->delete($user->profile_image);
@@ -141,14 +126,4 @@ class UserController extends Controller
 
         return response()->json(['message' => 'User deleted successfully.']);
     }
-
-    private function generateImageUrl($path, $disk)
-    {
-        if ($disk === 'public') {
-            return asset('storage/' . $path);
-        }
-    
-        return Storage::disk('b2')->temporaryUrl($path, now()->addMinutes(60));
-    }
-    
 }
