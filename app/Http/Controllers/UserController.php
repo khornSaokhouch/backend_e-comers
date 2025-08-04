@@ -17,9 +17,12 @@ class UserController extends Controller
             return response()->json(['message' => 'Forbidden: Admins only'], 403);
         }
 
-        $users = User::all()->map(function ($user) {
-            $disk = App::environment('local') ? 'public' : 'b2';
-            $user->profile_image_url = $user->profile_image ? $this->generateImageUrl($user->profile_image, $disk) : null;
+        $disk = App::environment('local') ? 'public' : 'b2';
+
+        $users = User::all()->map(function ($user) use ($disk) {
+            $user->profile_image_url = $user->profile_image
+                ? $this->generateImageUrl($user->profile_image, $disk)
+                : null;
             return $user;
         });
 
@@ -39,7 +42,9 @@ class UserController extends Controller
         }
 
         $disk = App::environment('local') ? 'public' : 'b2';
-        $user->profile_image_url = $user->profile_image ? $this->generateImageUrl($user->profile_image, $disk) : null;
+        $user->profile_image_url = $user->profile_image
+            ? $this->generateImageUrl($user->profile_image, $disk)
+            : null;
 
         return response()->json($user);
     }
@@ -99,7 +104,9 @@ class UserController extends Controller
             $user->update($validated);
             $user->refresh();
 
-            $user->profile_image_url = $user->profile_image ? $this->generateImageUrl($user->profile_image, $disk) : null;
+            $user->profile_image_url = $user->profile_image
+                ? $this->generateImageUrl($user->profile_image, $disk)
+                : null;
 
             return response()->json($user);
 
@@ -140,7 +147,8 @@ class UserController extends Controller
         if ($disk === 'public') {
             return asset('storage/' . $path);
         }
-
+    
         return Storage::disk('b2')->temporaryUrl($path, now()->addMinutes(60));
     }
+    
 }
