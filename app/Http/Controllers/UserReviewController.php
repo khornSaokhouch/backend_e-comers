@@ -7,12 +7,19 @@ use Illuminate\Http\Request;
 
 class UserReviewController extends Controller
 {
-    // List all reviews for authenticated user
-    public function index()
+    // List all reviews for authenticated user or by product ID
+    public function index(Request $request)
     {
         $userId = auth()->id();
+        $productId = $request->query('product_id');
 
-        $reviews = UserReview::where('user_id', $userId)->get();
+        if ($productId) {
+            // Load reviews for product with user info
+            $reviews = UserReview::with('user')->where('order_product_id', $productId)->get();
+        } else {
+            // Load reviews for authenticated user with user info
+            $reviews = UserReview::with('user')->where('user_id', $userId)->get();
+        }
 
         return response()->json($reviews);
     }
@@ -22,7 +29,7 @@ class UserReviewController extends Controller
     {
         $userId = auth()->id();
 
-        $review = UserReview::where('id', $id)->where('user_id', $userId)->first();
+        $review = UserReview::with('user')->where('id', $id)->where('user_id', $userId)->first();
 
         if (!$review) {
             return response()->json(['message' => 'Review not found'], 404);
@@ -49,30 +56,35 @@ class UserReviewController extends Controller
             'rating' => $validated['rating'],
         ]);
 
+        // Load user relation for response
+        $review->load('user');
+
         return response()->json($review, 201);
     }
 
-
+    // Update existing review
     public function update(Request $request, $id)
-{
-    $userId = auth()->id();
+    {
+        $userId = auth()->id();
 
-    $review = UserReview::where('id', $id)->where('user_id', $userId)->first();
+        $review = UserReview::where('id', $id)->where('user_id', $userId)->first();
 
-    if (!$review) {
-        return response()->json(['message' => 'Review not found'], 404);
+        if (!$review) {
+            return response()->json(['message' => 'Review not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'review_text' => 'nullable|string',
+            'rating' => 'nullable|integer|min:1|max:5',
+        ]);
+
+        $review->update($validated);
+
+        // Reload user relationship for response
+        $review->load('user');
+
+        return response()->json($review);
     }
-
-    $validated = $request->validate([
-        'review_text' => 'nullable|string',
-        'rating' => 'nullable|integer|min:1|max:5',
-    ]);
-
-    $review->update($validated);
-
-    return response()->json($review);
-}
-
 
     // Delete a review by id
     public function destroy($id)

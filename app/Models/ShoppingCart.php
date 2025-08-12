@@ -31,4 +31,5 @@ class ShoppingCart extends Model
     {
         return $this->hasMany(ShoppingCartItem::class, 'cart_id');
     }
+    
 }

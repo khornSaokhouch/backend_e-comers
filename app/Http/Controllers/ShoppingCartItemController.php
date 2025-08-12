@@ -12,13 +12,42 @@ class ShoppingCartItemController extends Controller
     public function index(Request $request)
     {
         if ($request->has('cart_id')) {
-            $items = ShoppingCartItem::where('cart_id', $request->cart_id)->with('productItem')->get();
+            $items = ShoppingCartItem::where('cart_id', $request->cart_id)
+                ->with('productItem.product') // this loads product inside productItem
+                ->get();
         } else {
-            $items = ShoppingCartItem::with(['productItem', 'cart'])->get();
+            $items = ShoppingCartItem::with(['productItem.product', 'cart'])->get();
         }
-
+    
         return response()->json($items, 200);
     }
+
+    public function checkoutItem($id)
+{
+    $item = ShoppingCartItem::with('productItem')->find($id);
+
+    if (!$item) {
+        return response()->json(['message' => 'Cart item not found'], 404);
+    }
+
+    $productItem = $item->productItem;
+
+    if ($productItem->quantity_in_stock < $item->qty) {
+        return response()->json(['message' => 'Not enough stock to checkout this item.'], 400);
+    }
+
+    // Deduct stock
+    $productItem->decrement('quantity_in_stock', $item->qty);
+
+    // You can also create an Order or Purchase record here if needed
+
+    // Remove item from cart
+    $item->delete();
+
+    return response()->json(['message' => 'Item successfully checked out'], 200);
+}
+
+    
 
     // Show a single cart item
     public function show($id)

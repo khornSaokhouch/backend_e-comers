@@ -22,6 +22,9 @@ class ShoppingCartItem extends Model
 
     public function productItem()
     {
-        return $this->belongsTo(ProductItem::class, 'product_item_id');
+        return $this->belongsTo(ProductItem::class);
     }
+    
+
+    
 }

@@ -103,6 +103,22 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     Route::get('/stores', [StoreController::class, 'index']);
     Route::get('/stores/{id}', [StoreController::class, 'show']);
 
+    // User Review
+    Route::get('/user-reviews', [UserReviewController::class, 'index']);
+    Route::get('/user-reviews/{id}', [UserReviewController::class, 'show']);
+
+    // Promotion Category Routes
+
+    Route::get('/promotion-category/{promotionId}/categories', [PromotionCategoryController::class, 'index']);
+    Route::get('/promotion-category/{promotionId}/categories/{categoryId}', [PromotionCategoryController::class, 'show']);
+
+    // Promotion Routes
+    Route::get('/promotions', [PromotionController::class, 'index']);
+    Route::get('/promotions/{id}', [PromotionController::class, 'show']);
+        
+    
+
+
 
 
 
@@ -140,6 +156,15 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/shopping-carts/{id}', [ShoppingCartController::class, 'update']);
     Route::delete('/shopping-carts/{id}', [ShoppingCartController::class, 'destroy']);
 
+    // Shopping Cart Items
+    Route::get('/shopping-cart-items', [ShoppingCartItemController::class, 'index']);
+    Route::get('/shopping-cart-items/{id}', [ShoppingCartItemController::class, 'show']);
+    Route::post('/shopping-cart-items', [ShoppingCartItemController::class, 'store']);
+    Route::put('/shopping-cart-items/{id}', [ShoppingCartItemController::class, 'update']);
+    Route::delete('/shopping-cart-items/{id}', [ShoppingCartItemController::class, 'destroy']);
+    Route::post('/shopping-cart-items/{id}/checkout', [ShoppingCartItemController::class, 'checkoutItem']);
+
+
     // Favourite Products
     Route::get('/favourites', [FavouriteController::class, 'index']);
     Route::get('/favourites/{id}', [FavouriteController::class, 'show']);
@@ -147,8 +172,7 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/favourites/{id}', [FavouriteController::class, 'destroy']);
 
     // User Review 
-    Route::get('/user-reviews', [UserReviewController::class, 'index']);
-    Route::get('/user-reviews/{id}', [UserReviewController::class, 'show']);
+
     Route::post('/user-reviews', [UserReviewController::class, 'store']);
     Route::put('/user-reviews/{id}', [UserReviewController::class, 'update']);
 
@@ -229,11 +253,18 @@ Route::middleware(['auth:api', 'allow.admin.or.company'])->group(function () {
     Route::post('/categories/{id}', [CategoryController::class, 'update']); // or use PUT/PATCH
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-    // Store Routes
 
+    // store 
+
+    // Route::post('/stores', [StoreController::class, 'store']);
+    // Route::put('/stores/{id}', [StoreController::class, 'update']);
+    // Route::delete('/stores/{id}', [StoreController::class, 'destroy']);
     Route::post('/stores', [StoreController::class, 'store']);
     Route::put('/stores/{id}', [StoreController::class, 'update']);
     Route::delete('/stores/{id}', [StoreController::class, 'destroy']);
+    Route::get('/stores/user/{id}', [StoreController::class, 'getStoresByUserId']);
+
+
 
     // Payment Types
 
@@ -277,15 +308,12 @@ Route::middleware(['auth:api', 'allow.admin.or.company'])->group(function () {
     
 
     // Promotion Routes
-    Route::get('/promotions', [PromotionController::class, 'index']);
+
     Route::post('/promotions', [PromotionController::class, 'store']);
-    Route::get('/promotions/{id}', [PromotionController::class, 'show']);
     Route::put('/promotions/{id}', [PromotionController::class, 'update']);
     Route::delete('/promotions/{id}', [PromotionController::class, 'destroy']);
 
     // Promotion-Category Routes
-    Route::get('/promotion-category/{promotionId}/categories', [PromotionCategoryController::class, 'index']);
-    Route::get('/promotion-category/{promotionId}/categories/{categoryId}', [PromotionCategoryController::class, 'show']);
     Route::post('/promotion-category/{promotionId}/categories', [PromotionCategoryController::class, 'store']);
     Route::put('/promotion-category/{promotionId}/categories/{categoryId}', [PromotionCategoryController::class, 'update']);
     Route::delete('/promotion-category/{promotionId}/categories/{categoryId}', [PromotionCategoryController::class, 'destroy']);
